@@ -40,9 +40,9 @@ module lynx
 );
 //-------------------------------------------------------------------------------------------------
 
-localparam ramAW = 14; // 14 = Lynx 48K, 16 = Lynx 96K/96Kscorpion
-localparam romAW = 14; // 14 = Lynx 48K, 15 = Lynx 96K/96Kscorpion
-localparam romFN = "48K-1+2.hex"; // "48K-1+2.hex" : "96K-1+2+3.hex" : "96K-1+2+3s.hex"
+//localparam ramAW = 14; // 14 = Lynx 48K, 16 = Lynx 96K/96Kscorpion
+//localparam romAW = 14; // 14 = Lynx 48K, 15 = Lynx 96K/96Kscorpion
+//localparam romFN = "48K-1+2.hex"; // "48K-1+2.hex" : "96K-1+2+3.hex" : "96K-1+2+3s.hex"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -125,15 +125,37 @@ always @(negedge reset, posedge clock24) if(!reset) reg84 <= 1'd0; else if(ce400
 
 //-------------------------------------------------------------------------------------------------
 
-wire[ 7:0] romDo;
-wire[romAW-1:0] romA = a[romAW-1:0];
+wire[ 7:0] rom000Q;
+wire[12:0] rom000A = a[12:0];
 
-rom #(.AW(romAW), .FN(romFN)) Rom
+rom #(.AW(13), .FN("rom000.hex")) Rom000
 (
 	.clock  (clock24),
 	.ce     (ce400p ),
-	.q      (romDo  ),
-	.a      (romA   )
+	.q      (rom000Q),
+	.a      (rom000A)
+);
+
+wire[ 7:0] rom001Q;
+wire[12:0] rom001A = a[12:0];
+
+rom #(.AW(13), .FN("rom001.hex")) Rom001
+(
+	.clock  (clock24),
+	.ce     (ce400p ),
+	.q      (rom001Q),
+	.a      (rom001A)
+);
+
+wire[ 7:0] rom010Q;
+wire[12:0] rom010A = a[12:0];
+
+rom #(.AW(13), .FN("rom010s.hex")) Rom010 // "rom010" standard, "rom010s" scorpion
+(
+	.clock  (clock24),
+	.ce     (ce400p ),
+	.q      (rom010Q),
+	.a      (rom010A)
 );
 
 //-------------------------------------------------------------------------------------------------
@@ -190,7 +212,7 @@ wire       ready;
 wire       sdrWe = !(!mreq && !wr && !reg7F[0]);
 wire[15:0] sdrDi = {2{q}};
 wire[15:0] sdrDo;
-wire[23:0] sdrA = { 8'h00, ramAW == 14 ? { a[14], a[12:0] } : a };
+wire[23:0] sdrA = { 8'h00, a }; // Lynx 48K ? { a[14], a[12:0] } : a;
 
 sdram SDram
 (
@@ -314,8 +336,9 @@ assign vggA2 = { a[14], a[12:0] };
 //-------------------------------------------------------------------------------------------------
 
 assign d
-	= !mreq && !reg7F[4] && a[15:14] == 2'b00 ? romDo
-	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? (romAW == 14 ? 8'hFF : romDo)
+	= !mreq && !reg7F[4] && a[15:13] == 3'b000 ? rom000Q
+	: !mreq && !reg7F[4] && a[15:13] == 3'b001 ? rom001Q
+	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? rom010Q // (Linx 48K ? 8'hFF : rom010Q)
 	: !mreq && !reg7F[5] ? sdrDo[7:0]
 	: !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
 	: !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
@@ -381,9 +404,6 @@ mist_video mistVideo
 	.VGA_VS    (sync[1]    ),
 	.VGA_HS    (sync[0]    )
 );
-
-//assign rgb = vduRGB;
-//assign sync = { 1'b1, ~(hSync^vSync) };
 
 wire osdRs = ~status[0];
 wire cas = ~status[1];
