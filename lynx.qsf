@@ -147,6 +147,10 @@ set_location_assignment PIN_P1 -to ear
 set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
 set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name GENERATE_RBF_FILE ON
+set_global_assignment -name SYSTEMVERILOG_FILE src/rgb2ypbpr.sv
+set_global_assignment -name VERILOG_FILE src/scandoubler.v
+set_global_assignment -name VERILOG_FILE src/mist_video.v
+set_global_assignment -name SYSTEMVERILOG_FILE src/cofi.sv
 set_global_assignment -name VERILOG_FILE src/user_io.v
 set_global_assignment -name VERILOG_FILE src/osd.v
 set_global_assignment -name SYSTEMVERILOG_FILE src/lynx.sv
